@@ -79,6 +79,10 @@ const Signup = ({ onSignup, onSwitchToLogin }) => {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       
+      // Save credentials for future logins after successful signup
+      localStorage.setItem('rememberedEmail', formData.email);
+      localStorage.setItem('rememberedPassword', formData.password);
+      
       // Mock successful signup
       onSignup({
         name: `${formData.firstName} ${formData.lastName}`,

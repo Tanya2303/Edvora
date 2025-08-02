@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
 import pic1 from '../assets/pic1.jpeg';
+import { useRemindersContext } from '../context/RemindersContext.jsx';
 
-const Home = ({ isLoggedIn, user, onNavigateToSignup, isDashboard = false, onNavigateToReminders }) => {
+const Home = ({ isLoggedIn, user, onNavigateToSignup, isDashboard = false, onNavigateToReminders, onNavigateToAICompanion, onNavigateToDashboard }) => {
+  // Move useReminders to top-level so all views share the same reminders state
+  const { reminders, getUpcomingReminders, getStats } = useRemindersContext();
   const [motivationQuote, setMotivationQuote] = useState('');
   const [upcomingReminders, setUpcomingReminders] = useState([]);
   const [hasData, setHasData] = useState(false); // Track if user has any data
@@ -135,6 +138,8 @@ const Home = ({ isLoggedIn, user, onNavigateToSignup, isDashboard = false, onNav
 
   // Logged In User - Clean Home Page (not dashboard)
   const LoggedInHomeView = () => (
+    // Pass onNavigateToDashboard to the Dashboard Card button
+
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         {/* Welcome Section */}
@@ -161,7 +166,10 @@ const Home = ({ isLoggedIn, user, onNavigateToSignup, isDashboard = false, onNav
             <p className="text-gray-600 mb-6">
               View your progress, reminders, and insights in one place.
             </p>
-            <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+            <button 
+              onClick={onNavigateToDashboard}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+            >
               Go to Dashboard
             </button>
           </div>
@@ -192,7 +200,10 @@ const Home = ({ isLoggedIn, user, onNavigateToSignup, isDashboard = false, onNav
             <p className="text-gray-600 mb-6">
               Get instant help with your studies and homework.
             </p>
-            <button className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+            <button 
+              onClick={onNavigateToAICompanion}
+              className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+            >
               Start Chat
             </button>
           </div>
@@ -202,22 +213,11 @@ const Home = ({ isLoggedIn, user, onNavigateToSignup, isDashboard = false, onNav
   );
 
   // Dashboard View - Full dashboard with data
-  const DashboardView = () => {
-    // Get reminders from localStorage
-    const [reminders, setReminders] = useState([]);
-    
-    useEffect(() => {
-      const savedReminders = localStorage.getItem('reminders');
-      if (savedReminders) {
-        setReminders(JSON.parse(savedReminders));
-      }
-    }, []);
-
+  // Dashboard View - Full dashboard with data
+  const DashboardView = ({ user, motivationQuote, onNavigateToReminders, reminders, getUpcomingReminders, getStats }) => {
     // Get top 3 upcoming reminders
-    const upcomingReminders = reminders
-      .filter(reminder => !reminder.completed)
-      .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
-      .slice(0, 3);
+    const upcomingReminders = getUpcomingReminders(3);
+    const stats = getStats();
 
     const formatDate = (dateString) => {
       const date = new Date(dateString);
@@ -328,7 +328,10 @@ const Home = ({ isLoggedIn, user, onNavigateToSignup, isDashboard = false, onNav
                     <div className="text-2xl mb-2">🤖</div>
                     <h3 className="font-semibold mb-2">Hi! I'm your study buddy</h3>
                     <p className="text-sm opacity-90 mb-4">Ask me anything to get started.</p>
-                    <button className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                    <button 
+                      onClick={onNavigateToAICompanion}
+                      className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                    >
                       <span>💬</span>
                       Start Chat
                     </button>
@@ -343,7 +346,7 @@ const Home = ({ isLoggedIn, user, onNavigateToSignup, isDashboard = false, onNav
             <div className="bg-white rounded-xl p-6 shadow-lg">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Progress & Insights</h2>
               
-              {!hasData ? (
+              {stats.total === 0 ? (
                 <div className="text-center py-12">
                   <div className="text-6xl mb-4">📊</div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -354,26 +357,33 @@ const Home = ({ isLoggedIn, user, onNavigateToSignup, isDashboard = false, onNav
                   </p>
                 </div>
               ) : (
-                <div className="grid md:grid-cols-3 gap-6">
-                  {/* Focus Time */}
+                <div className="grid md:grid-cols-4 gap-6">
+                  {/* Total Reminders */}
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-green-600 mb-2">2.5 hours</div>
-                    <h3 className="font-semibold text-gray-900">Daily Focus Time</h3>
-                    <p className="text-sm text-gray-600">Average this week</p>
+                    <div className="text-3xl font-bold text-blue-600 mb-2">{stats.total}</div>
+                    <h3 className="font-semibold text-gray-900">Total Reminders</h3>
+                    <p className="text-sm text-gray-600">All time</p>
                   </div>
 
-                  {/* Most Productive Day */}
+                  {/* Pending Tasks */}
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-purple-600 mb-2">Wednesday</div>
-                    <h3 className="font-semibold text-gray-900">Most Productive Day</h3>
-                    <p className="text-sm text-gray-600">This week</p>
+                    <div className="text-3xl font-bold text-orange-600 mb-2">{stats.pending}</div>
+                    <h3 className="font-semibold text-gray-900">Pending</h3>
+                    <p className="text-sm text-gray-600">To complete</p>
                   </div>
 
-                  {/* Tasks Completed */}
+                  {/* Completed Tasks */}
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-indigo-600 mb-2">12</div>
-                    <h3 className="font-semibold text-gray-900">Tasks Completed</h3>
-                    <p className="text-sm text-gray-600">This week</p>
+                    <div className="text-3xl font-bold text-green-600 mb-2">{stats.completed}</div>
+                    <h3 className="font-semibold text-gray-900">Completed</h3>
+                    <p className="text-sm text-gray-600">Done</p>
+                  </div>
+
+                  {/* Overdue Tasks */}
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-red-600 mb-2">{stats.overdue}</div>
+                    <h3 className="font-semibold text-gray-900">Overdue</h3>
+                    <p className="text-sm text-gray-600">Need attention</p>
                   </div>
                 </div>
               )}
@@ -392,7 +402,14 @@ const Home = ({ isLoggedIn, user, onNavigateToSignup, isDashboard = false, onNav
     // Logged in - check if it's dashboard or home
     if (isDashboard) {
       // Dashboard mode - show full dashboard with data
-      return <DashboardView />;
+      return <DashboardView 
+        user={user}
+        motivationQuote={motivationQuote}
+        onNavigateToReminders={onNavigateToReminders}
+        reminders={reminders}
+        getUpcomingReminders={getUpcomingReminders}
+        getStats={getStats}
+      />;
     } else {
       // Home mode - show clean home page without dashboard UI
       return <LoggedInHomeView />;

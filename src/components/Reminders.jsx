@@ -1,38 +1,94 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import ReminderOverview from './ReminderOverview';
 import ReminderList from './ReminderList';
 import AddReminderModal from './AddReminderModal';
+import { useRemindersContext } from '../context/RemindersContext.jsx';
 
-const Reminders = ({ user }) => {
-  const [reminders, setReminders] = useState([]);
+const Reminders = ({ user, onNavigateToLogin, onNavigateToSignup }) => {
+  // Not logged in UI
+  if (!user || !user.name) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 flex flex-col items-center justify-center p-6">
+        {/* Illustration */}
+        <div className="mb-8 animate-bounce">
+          <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="18" y="20" width="84" height="60" rx="12" fill="#6366F1" />
+            <rect x="30" y="32" width="60" height="36" rx="6" fill="#EEF2FF" />
+            <rect x="38" y="40" width="44" height="8" rx="3" fill="#6366F1" opacity="0.7" />
+            <rect x="38" y="54" width="24" height="6" rx="3" fill="#6366F1" opacity="0.4" />
+            <circle cx="90" cy="70" r="8" fill="#F59E42" />
+            <rect x="78" y="62" width="10" height="4" rx="2" fill="#F59E42" />
+            {/* Mascot placing sticky note */}
+            <ellipse cx="60" cy="100" rx="30" ry="6" fill="#E0E7FF" />
+            <circle cx="60" cy="90" r="8" fill="#6366F1" />
+            <rect x="55" y="82" width="10" height="6" rx="2" fill="#F59E42" />
+          </svg>
+        </div>
+        {/* Hero Message */}
+        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 text-center">
+          Stay on top of your tasks with smart reminders!
+        </h1>
+        <p className="text-lg text-gray-700 mb-8 text-center max-w-xl">
+          Never miss a deadline again. Organize your assignments, exams, and goals with powerful reminders.
+        </p>
+        {/* Feature Highlights */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 max-w-2xl w-full">
+          <div className="bg-white rounded-xl shadow-md p-6 flex items-center gap-4">
+            <span className="text-2xl">⏰</span>
+            <span className="text-gray-800 font-medium">Set deadlines for assignments, exams, and personal goals</span>
+          </div>
+          <div className="bg-white rounded-xl shadow-md p-6 flex items-center gap-4">
+            <span className="text-2xl">🔔</span>
+            <span className="text-gray-800 font-medium">Get notifications and nudges</span>
+          </div>
+          <div className="bg-white rounded-xl shadow-md p-6 flex items-center gap-4">
+            <span className="text-2xl">✅</span>
+            <span className="text-gray-800 font-medium">Mark tasks as complete and track your progress</span>
+          </div>
+          <div className="bg-white rounded-xl shadow-md p-6 flex items-center gap-4">
+            <span className="text-2xl">📊</span>
+            <span className="text-gray-800 font-medium">Visual overview of your upcoming reminders</span>
+          </div>
+        </div>
+        {/* CTA Buttons */}
+        <div className="flex flex-col md:flex-row gap-4 mb-6">
+          <button
+            onClick={onNavigateToLogin}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-lg text-lg font-semibold shadow-lg transition-all"
+          >
+            Login
+          </button>
+          <button
+            onClick={onNavigateToSignup}
+            className="bg-white border-2 border-indigo-600 text-indigo-700 hover:bg-indigo-50 px-8 py-3 rounded-lg text-lg font-semibold shadow-lg transition-all"
+          >
+            Create Account
+          </button>
+        </div>
+        {/* Access Notice */}
+        <div className="bg-yellow-100 border-l-4 border-yellow-400 text-yellow-800 p-4 rounded-lg max-w-xl text-center text-base">
+          <span className="font-semibold">Reminder features are only available for logged-in users.</span> Please sign in to view, add, or manage your reminders.
+        </div>
+      </div>
+    );
+  }
+  const {
+    reminders,
+    addReminder,
+    updateReminder,
+    deleteReminder,
+    toggleComplete
+  } = useRemindersContext();
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingReminder, setEditingReminder] = useState(null);
 
-  // Load reminders from localStorage on component mount
-  useEffect(() => {
-    const savedReminders = localStorage.getItem('reminders');
-    if (savedReminders) {
-      setReminders(JSON.parse(savedReminders));
-    }
-  }, []);
-
-  // Save reminders to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem('reminders', JSON.stringify(reminders));
-  }, [reminders]);
-
   const handleAddReminder = (newReminder) => {
-    setReminders(prev => [...prev, newReminder]);
+    addReminder(newReminder);
   };
 
   const handleToggleComplete = (reminderId) => {
-    setReminders(prev => 
-      prev.map(reminder => 
-        reminder.id === reminderId 
-          ? { ...reminder, completed: !reminder.completed }
-          : reminder
-      )
-    );
+    toggleComplete(reminderId);
   };
 
   const handleEdit = (reminder) => {
@@ -42,16 +98,12 @@ const Reminders = ({ user }) => {
 
   const handleDelete = (reminderId) => {
     if (window.confirm('Are you sure you want to delete this reminder?')) {
-      setReminders(prev => prev.filter(reminder => reminder.id !== reminderId));
+      deleteReminder(reminderId);
     }
   };
 
   const handleSaveEdit = (updatedReminder) => {
-    setReminders(prev => 
-      prev.map(reminder => 
-        reminder.id === updatedReminder.id ? updatedReminder : reminder
-      )
-    );
+    updateReminder(updatedReminder);
     setEditingReminder(null);
     setIsModalOpen(false);
   };

@@ -9,6 +9,7 @@ const Navbar = ({
   onNavigateToHome,
   onNavigateToDashboard,
   onNavigateToReminders,
+  onNavigateToAICompanion,
   currentPage 
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -52,21 +53,24 @@ const Navbar = ({
     setIsMobileMenuOpen(false);
   };
 
+  const handleAICompanionClick = () => {
+    onNavigateToAICompanion();
+    setIsMobileMenuOpen(false);
+  };
+
   // Navigation links for logged-out users
   const loggedOutLinks = [
     { name: 'Home', onClick: handleHomeClick },
-    { name: 'AI Companion', href: '/ai-companion' },
-    { name: 'Reminders', onClick: handleRemindersClick },
-    { name: 'Insights', href: '/insights' }
+    { name: 'AI Companion', onClick: handleAICompanionClick },
+    { name: 'Reminders', onClick: handleRemindersClick }
   ];
 
   // Navigation links for logged-in users
   const loggedInLinks = [
     { name: 'Home', onClick: handleHomeClick },
     { name: 'Dashboard', onClick: handleDashboardClick },
-    { name: 'AI Companion', href: '/ai-companion' },
-    { name: 'Reminders', onClick: handleRemindersClick },
-    { name: 'Insights', href: '/insights' }
+    { name: 'AI Companion', onClick: handleAICompanionClick },
+    { name: 'Reminders', onClick: handleRemindersClick }
   ];
 
   const currentLinks = isLoggedIn ? loggedInLinks : loggedOutLinks;
@@ -88,15 +92,27 @@ const Navbar = ({
           {/* Desktop Navigation Links */}
           <div className="hidden md:block">
             <div className="ml-10 flex items-baseline space-x-4">
-              {currentLinks.map((link) => (
-                <button
-                  key={link.name}
-                  onClick={link.onClick}
-                  className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                >
-                  {link.name}
-                </button>
-              ))}
+              {currentLinks.map((link) => {
+                // Determine if this link is the current page
+                const isActive =
+                  (link.name === 'Home' && currentPage === 'home') ||
+                  (link.name === 'Dashboard' && currentPage === 'dashboard') ||
+                  (link.name === 'Reminders' && currentPage === 'reminders') ||
+                  (link.name === 'AI Companion' && currentPage === 'ai-companion');
+                return (
+                  <button
+                    key={link.name}
+                    onClick={link.onClick}
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                      isActive
+                        ? 'text-indigo-700 font-bold underline underline-offset-8 decoration-2'
+                        : 'text-gray-700 hover:text-indigo-600'
+                    }`}
+                  >
+                    {link.name}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -119,15 +135,7 @@ const Navbar = ({
               </div>
             ) : (
               <div className="flex items-center space-x-4">
-                {/* Notification Bell */}
-                <button className="text-gray-700 hover:text-indigo-600 p-2 rounded-full hover:bg-gray-100 transition-colors">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17h6m-6-4h6m-6-4h6m-6-4h6" />
-                  </svg>
-                </button>
-
-                {/* Profile Avatar Dropdown */}
+                {/* Profile Dropdown */}
                 <div className="relative">
                   <button
                     onClick={toggleProfileDropdown}
@@ -144,12 +152,6 @@ const Navbar = ({
                   {/* Dropdown Menu */}
                   {isProfileDropdownOpen && (
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
-                      <a href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                        View Profile
-                      </a>
-                      <a href="/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                        Settings
-                      </a>
                       <button
                         onClick={handleLogout}
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
